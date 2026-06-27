@@ -795,14 +795,10 @@
             </div>
             <div class="summary-card pending" onclick="setStatusFilter('Pending')">
                 <span class="label">Pending</span>
-                <div class="summary-split">
+                <div class="summary-split" style="grid-template-columns: 1fr;">
                     <div class="split-block">
                         <span class="split-label">All</span>
                         <span class="value" id="countPendingAll">0</span>
-                    </div>
-                    <div class="split-block">
-                        <span class="split-label">Today</span>
-                        <span class="value" id="countPendingToday">0</span>
                     </div>
                 </div>
             </div>
@@ -1264,21 +1260,25 @@
             const totalAll = scoped.length;
             const totalToday = scoped.filter(d => toDateKey(d.CreatedAt) === selectedDate).length;
             const pendingAll = scoped.filter(d => d.Status === 'Pending').length;
-            const pendingToday = scoped.filter(d => d.Status === 'Pending' && toDateKey(d.CreatedAt) === selectedDate).length;
             const completedAll = scoped.filter(d => d.Status === 'Completed').length;
-            const completedToday = scoped.filter(d => d.Status === 'Completed' && toDateKey(d.CreatedAt) === selectedDate).length;
+            const completedToday = scoped.filter(d => d.Status === 'Completed' && toDateKey(d.CompletedAt || d.CompletedAT) === selectedDate).length;
 
             document.getElementById('countTotalAll').textContent = totalAll;
             document.getElementById('countTotalToday').textContent = totalToday;
             document.getElementById('countPendingAll').textContent = pendingAll;
-            document.getElementById('countPendingToday').textContent = pendingToday;
             document.getElementById('countCompletedAll').textContent = completedAll;
             document.getElementById('countCompletedToday').textContent = completedToday;
 
             // Final table filter includes status + selected date
             let filtered = scoped.filter(item => {
                 if (sf !== 'All' && item.Status !== sf) return false;
-                if (selectedDate && toDateKey(item.CreatedAt) !== selectedDate) return false;
+                if (selectedDate) {
+                    if (item.Status === 'Completed') {
+                        if (toDateKey(item.CompletedAt || item.CompletedAT) !== selectedDate) return false;
+                    } else {
+                        if (toDateKey(item.CreatedAt) !== selectedDate) return false;
+                    }
+                }
                 return true;
             });
 
@@ -1351,7 +1351,8 @@
                             </td>
                             <td>
                                 <div class="cell-title">${item.Title || '---'}</div>
-                                <div class="date-badge"><i class="bi bi-calendar3"></i> ${formatDate(item.CreatedAt)}</div>
+                                <div class="date-badge"><i class="bi bi-calendar3"></i> Created: ${formatDate(item.CreatedAt)}</div>
+                                ${!isPending && (item.CompletedAt || item.CompletedAT) ? `<div class="date-badge" style="color: var(--accent);"><i class="bi bi-calendar-check"></i> Completed: ${formatDate(item.CompletedAt || item.CompletedAT)}</div>` : ''}
                                 <div class="cell-source" style="margin-top:4px"><i class="bi bi-person-circle"></i> ${item.Source || '---'}</div>
                                 ${item.Payment ? `<div class="payment-text" style="margin-top:6px"><i class="bi bi-currency-rupee"></i> ${item.Payment}</div>` : ''}
                                 <div style="margin-top:8px"><span class="status-badge ${isPending ? 'status-pending' : 'status-completed'}">${item.Status}</span></div>
